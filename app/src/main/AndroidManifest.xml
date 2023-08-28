@@ -19,6 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TrackerApp"
         tools:targetApi="31">
+        <!-- Activity Main -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
