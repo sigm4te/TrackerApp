@@ -1,6 +1,10 @@
 <resources>
     <!--  Application  -->
     <string name="app_name">TrackerApp</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
+
+    <!--  Dialog Fragment  -->
+    <string name="gps_not_found_title">GPS not found</string>
+    <string name="gps_not_found_message">Do you want to enable?</string>
+    <string name="gps_yes">Yes</string>
+    <string name="gps_no">No</string>
 </resources>

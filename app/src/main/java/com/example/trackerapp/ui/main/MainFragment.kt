@@ -1,13 +1,20 @@
 package com.example.trackerapp.ui.main
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.example.trackerapp.R
 import com.example.trackerapp.databinding.FragmentMainBinding
 import org.osmdroid.api.IMapController
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -18,6 +25,7 @@ class MainFragment : Fragment() {
 
     private lateinit var binding: FragmentMainBinding
     private lateinit var map: MapView
+    private lateinit var locationManager: LocationManager
 
     companion object {
         fun newInstance() = MainFragment()
@@ -38,7 +46,10 @@ class MainFragment : Fragment() {
     }
 
     private fun init() {
+        locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
         requestLocationPermission()
+        checkLocationStatus()
 
         map = binding.map
         map.setTileSource(TileSourceFactory.MAPNIK)
@@ -63,6 +74,29 @@ class MainFragment : Fragment() {
             Manifest.permission.ACCESS_COARSE_LOCATION
         ))
     }
+
+    private fun checkLocationStatus() {
+        if (!isLocationEnabled()) {
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.gps_not_found_title)
+                .setMessage(R.string.gps_not_found_message)
+                .setPositiveButton(R.string.gps_yes) { _, _ ->
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }
+                .setNegativeButton(R.string.gps_no, null)
+                .show();
+        }
+    }
+
+    private fun isLocationEnabled(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // API >= 28 / Android 9+
+            locationManager.isLocationEnabled
+        } else {
+            // API < 28
+            val mode: Int = Settings.Secure.getInt(requireContext().contentResolver, Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF)
+            (mode != Settings.Secure.LOCATION_MODE_OFF)
+        }
 
     override fun onPause() {
         super.onPause()
