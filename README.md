@@ -6,3 +6,5 @@
 В приложении использовано:
 * MVVM
 * View Binding
+* LiveData
+- OSMdroid
