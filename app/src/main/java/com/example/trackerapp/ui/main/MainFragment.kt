@@ -18,14 +18,18 @@ import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.trackerapp.R
 import com.example.trackerapp.application.TrackerApp
 import com.example.trackerapp.databinding.FragmentMainBinding
 import org.osmdroid.api.IMapController
+import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.ScaleBarOverlay
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider
@@ -48,14 +52,21 @@ class MainFragment : Fragment() {
     private lateinit var locationOverlay: MyLocationNewOverlay
     private lateinit var compassOverlay: CompassOverlay
     private lateinit var scaleBarOverlay: ScaleBarOverlay
+    private lateinit var polylineOverlay: Polyline
 
     private val delay: Long = 5_000L
+    private val distance: Long = 5_000L
+    private val time: Float = 5.0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         locationManager = TrackerApp.instance().getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
+        config()
         check()
+    }
+
+    private fun config() {
+        Configuration.getInstance().userAgentValue = TrackerApp.instance().packageName
     }
 
     private fun check() {
@@ -126,7 +137,10 @@ class MainFragment : Fragment() {
             setCentred(true)
             setScaleBarOffset(TrackerApp.instance().resources.displayMetrics.widthPixels / 2, 10)
         }
-        binding.map.overlays.addAll(listOf(locationOverlay, compassOverlay, scaleBarOverlay))
+        polylineOverlay = Polyline(binding.map).apply {
+            outlinePaint.color = ContextCompat.getColor(TrackerApp.instance(), R.color.red)
+        }
+        binding.map.overlays.addAll(listOf(polylineOverlay, locationOverlay, compassOverlay, scaleBarOverlay))
         binding.map.invalidate()
     }
 
@@ -142,7 +156,14 @@ class MainFragment : Fragment() {
             when (isGranted) {
                 false -> {}
                 true -> { viewModel.locationEnabled.observe(viewLifecycleOwner) { isEnabled ->
-                    when (isEnabled) { false -> {}; true -> viewModel.onTrackingReady() } }
+                            when (isEnabled) {
+                                false -> {}
+                                true -> {
+                                    viewModel.onTrackingReady()
+                                    drawPathway()
+                                }
+                            }
+                    }
                 }
             }
         }
@@ -151,6 +172,16 @@ class MainFragment : Fragment() {
                 .apply { removeCallbacksAndMessages(null) }
                 .postDelayed({ viewModel.onTrackingReady() }, delay)
             false
+        }
+        viewModel.points.observe(viewLifecycleOwner) {
+            polylineOverlay.setPoints(it)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun drawPathway() {
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, distance, time) { location ->
+            viewModel.onTrackingResult(GeoPoint(location.latitude, location.longitude))
         }
     }
 
@@ -176,6 +207,7 @@ class MainFragment : Fragment() {
         compassOverlay.enableCompass()
         scaleBarOverlay.enableScaleBar()
         enableTracking()
+        polylineOverlay.isEnabled = true
         binding.map.onResume()
     }
 
@@ -184,6 +216,7 @@ class MainFragment : Fragment() {
         compassOverlay.disableCompass()
         scaleBarOverlay.disableScaleBar()
         disableTracking()
+        polylineOverlay.isEnabled = false
         binding.map.onPause()
     }
 
