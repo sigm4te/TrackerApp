@@ -1,6 +1,7 @@
 <resources>
     <!--  Application  -->
     <string name="app_name">TrackerApp</string>
+    <string name="notification_message">Location is started</string>
 
     <!--  Dialog Fragment  -->
     <string name="gps_not_found_title">GPS not found</string>

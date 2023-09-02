@@ -24,6 +24,7 @@ import androidx.fragment.app.viewModels
 import com.example.trackerapp.R
 import com.example.trackerapp.application.TrackerApp
 import com.example.trackerapp.databinding.FragmentMainBinding
+import com.example.trackerapp.service.LocationForegroundService
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -45,7 +46,7 @@ class MainFragment : Fragment() {
     private val viewModel: MainViewModel by viewModels()
     private lateinit var binding: FragmentMainBinding
 
-    private lateinit var permissionLauncher: ActivityResultLauncher<String>
+    private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var locationManager: LocationManager
 
     private lateinit var mapController: IMapController
@@ -70,10 +71,14 @@ class MainFragment : Fragment() {
     }
 
     private fun check() {
-        // Location Permission
-        permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { status ->
-            viewModel.onRequestResult(status) }
-        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        // Location & Notification Permissions
+        val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS)
+        permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            val status = result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false)
+            viewModel.onRequestResult(status)
+        }
+        permissionLauncher.launch(permissions)
+
         // Location Enabled
         if (isLocationEnabled()) { viewModel.onLocationEnabled() } else { showLocationRequest() }
     }
@@ -192,6 +197,9 @@ class MainFragment : Fragment() {
                 true -> {
                     locationOverlay.enableMyLocation()
                     locationOverlay.enableFollowLocation()
+
+                    val intent = Intent(requireContext(), LocationForegroundService::class.java)
+                    ContextCompat.startForegroundService(requireContext(), intent)
                 }
             }
         }
