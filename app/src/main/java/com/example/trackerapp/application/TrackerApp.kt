@@ -3,12 +3,14 @@ package com.example.trackerapp.application
 import android.app.Application
 import androidx.room.Room
 import com.example.trackerapp.database.AppDatabase
+import com.example.trackerapp.utils.ViewModelFactory
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
 
 class TrackerApp : Application() {
 
     lateinit var database: AppDatabase
+    lateinit var vmFactory: ViewModelFactory
 
     companion object {
         @Volatile private var INSTANCE: TrackerApp? = null
@@ -24,5 +26,6 @@ class TrackerApp : Application() {
         database = Room
             .databaseBuilder(instance(), AppDatabase::class.java, "database.db")
             .build()
+        vmFactory = ViewModelFactory(database)
     }
 }

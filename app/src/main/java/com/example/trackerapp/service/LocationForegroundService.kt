@@ -18,7 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.trackerapp.R
 import com.example.trackerapp.application.TrackerApp
 import com.example.trackerapp.database.AppDatabase
-import com.example.trackerapp.database.entity.LocationEntity
+import com.example.trackerapp.utils.mapToEntity
 import kotlinx.coroutines.launch
 
 class LocationForegroundService : LifecycleService() {
@@ -101,14 +101,3 @@ class LocationForegroundService : LifecycleService() {
         }
     }
 }
-
-private fun Location.mapToEntity() = LocationEntity(
-    timestamp = time,
-    lat = latitude,
-    lon = longitude,
-    accuracy = accuracy,
-    altitude = altitude,
-    bearing = bearing,
-    provider = provider,
-    speed = speed
-)

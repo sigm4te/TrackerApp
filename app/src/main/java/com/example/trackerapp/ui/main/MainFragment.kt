@@ -42,7 +42,7 @@ class MainFragment : Fragment() {
         fun newInstance() = MainFragment()
     }
 
-    private val viewModel: MainViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels { TrackerApp.instance().vmFactory }
     private lateinit var binding: FragmentMainBinding
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
 
@@ -123,6 +123,7 @@ class MainFragment : Fragment() {
         }
         mapController.apply {
             setZoom(18.0)
+            setCenter(viewModel.lastLocation.value)
         }
 
         viewModel.onMapReady()
@@ -160,21 +161,11 @@ class MainFragment : Fragment() {
                         false -> {}
                         true -> {
                             viewModel.onTrackingReady()
-                            //drawPathway()
                         }
                     }
                 }
                 }
             }
-        }
-        binding.map.setOnTouchListener { _, _ ->
-            Handler(Looper.getMainLooper())
-                .apply { removeCallbacksAndMessages(null) }
-                .postDelayed({ viewModel.onTrackingReady() }, delay)
-            false
-        }
-        viewModel.points.observe(viewLifecycleOwner) {
-            polylineOverlay.setPoints(it)
         }
     }
 
@@ -183,11 +174,21 @@ class MainFragment : Fragment() {
             when(it) {
                 false -> {}
                 true -> {
-                    locationOverlay.enableMyLocation()
-                    locationOverlay.enableFollowLocation()
-
                     val intent = Intent(requireContext(), LocationForegroundService::class.java)
                     ContextCompat.startForegroundService(requireContext(), intent)
+
+                    viewModel.points.observe(viewLifecycleOwner) { points ->
+                        polylineOverlay.setPoints(points)
+                    }
+                    viewModel.lastLocation.observe(viewLifecycleOwner) {
+                        Handler(Looper.getMainLooper())
+                            .apply { removeCallbacksAndMessages(null) }
+                            .postDelayed({
+                                locationOverlay.enableMyLocation()
+                                locationOverlay.enableFollowLocation()
+                            }, delay)
+                    }
+                    viewModel.onTrackingResult()
                 }
             }
         }
