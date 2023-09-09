@@ -28,7 +28,6 @@ import com.example.trackerapp.service.LocationForegroundService
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.ScaleBarOverlay
@@ -45,9 +44,7 @@ class MainFragment : Fragment() {
 
     private val viewModel: MainViewModel by viewModels()
     private lateinit var binding: FragmentMainBinding
-
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
-    private lateinit var locationManager: LocationManager
 
     private lateinit var mapController: IMapController
     private lateinit var locationOverlay: MyLocationNewOverlay
@@ -56,12 +53,9 @@ class MainFragment : Fragment() {
     private lateinit var polylineOverlay: Polyline
 
     private val delay: Long = 5_000L
-    private val distance: Long = 5_000L
-    private val time: Float = 5.0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        locationManager = TrackerApp.instance().getSystemService(Context.LOCATION_SERVICE) as LocationManager
         config()
         check()
     }
@@ -87,6 +81,7 @@ class MainFragment : Fragment() {
     private fun isLocationEnabled(): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             // API >= 28 / Android 9+
+            val locationManager = TrackerApp.instance().getSystemService(Context.LOCATION_SERVICE) as LocationManager
             locationManager.isLocationEnabled
         } else {
             // API < 28
@@ -161,14 +156,14 @@ class MainFragment : Fragment() {
             when (isGranted) {
                 false -> {}
                 true -> { viewModel.locationEnabled.observe(viewLifecycleOwner) { isEnabled ->
-                            when (isEnabled) {
-                                false -> {}
-                                true -> {
-                                    viewModel.onTrackingReady()
-                                    drawPathway()
-                                }
-                            }
+                    when (isEnabled) {
+                        false -> {}
+                        true -> {
+                            viewModel.onTrackingReady()
+                            //drawPathway()
+                        }
                     }
+                }
                 }
             }
         }
@@ -180,13 +175,6 @@ class MainFragment : Fragment() {
         }
         viewModel.points.observe(viewLifecycleOwner) {
             polylineOverlay.setPoints(it)
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun drawPathway() {
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, distance, time) { location ->
-            viewModel.onTrackingResult(GeoPoint(location.latitude, location.longitude))
         }
     }
 
