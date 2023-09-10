@@ -7,4 +7,6 @@
 * MVVM
 * View Binding
 * LiveData
+* Coroutines
 - OSMdroid
+- Room
