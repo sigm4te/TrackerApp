@@ -68,4 +68,8 @@ class MainViewModel(private val locationDao: LocationDao) : ViewModel() {
             }
         }
     }
+
+    fun onTrackingStop() {
+        _trackingReady.value = false
+    }
 }

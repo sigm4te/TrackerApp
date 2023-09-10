@@ -110,6 +110,9 @@ class MainFragment : Fragment() {
 
     private fun init() {
         mapController = binding.map.controller
+        binding.btnStop.setOnClickListener {
+            viewModel.onTrackingStop()
+        }
         drawMap()
         drawOverlays()
         start()
@@ -171,10 +174,12 @@ class MainFragment : Fragment() {
 
     private fun enableTracking() {
         viewModel.trackingReady.observe(viewLifecycleOwner) {
+            val intent = Intent(requireContext(), LocationForegroundService::class.java)
             when(it) {
-                false -> {}
+                false -> {
+                    requireContext().stopService(intent)
+                }
                 true -> {
-                    val intent = Intent(requireContext(), LocationForegroundService::class.java)
                     ContextCompat.startForegroundService(requireContext(), intent)
 
                     viewModel.points.observe(viewLifecycleOwner) { points ->
