@@ -2,6 +2,7 @@
     <!--  Application  -->
     <string name="app_name">TrackerApp</string>
     <string name="notification_message">Location is started</string>
+    <string name="btn_start_text">Start</string>
     <string name="btn_stop_text">Stop</string>
 
     <!--  Dialog Fragment  -->

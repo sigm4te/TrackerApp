@@ -19,6 +19,7 @@ class MainViewModel(private val locationDao: LocationDao) : ViewModel() {
     private val _locationEnabled: MutableLiveData<Boolean> = SingleLiveEvent()
     private val _mapReady: MutableLiveData<Boolean> = SingleLiveEvent()
     private val _trackingReady: MutableLiveData<Boolean> = MutableLiveData()
+    private val _trackingStart: MutableLiveData<Boolean> = MutableLiveData()
     private val _points: MutableLiveData<List<GeoPoint>> = MutableLiveData()
     private val _lastLocation: MediatorLiveData<GeoPoint> = MediatorLiveData()
 
@@ -26,6 +27,7 @@ class MainViewModel(private val locationDao: LocationDao) : ViewModel() {
     val locationEnabled: LiveData<Boolean> = _locationEnabled
     val mapReady: LiveData<Boolean> = _mapReady
     val trackingReady: LiveData<Boolean> = _trackingReady
+    val trackingStart: LiveData<Boolean> = _trackingStart
     val points: LiveData<List<GeoPoint>> = _points
     val lastLocation: LiveData<GeoPoint> = _lastLocation
 
@@ -49,11 +51,18 @@ class MainViewModel(private val locationDao: LocationDao) : ViewModel() {
             val list = locationDao.getLocations().map { it.mapToGeoPoint() }
             pointList.addAll(list)
             _points.value = list
+
+            val point = locationDao.getLastLocation().value?.mapToGeoPoint() ?: GeoPoint(0.0, 0.0)
+            _lastLocation.value = point
         }
     }
 
     fun onTrackingReady() {
         _trackingReady.value = true
+    }
+
+    fun onTrackingStart() {
+        _trackingStart.value = true
     }
 
     fun onTrackingResult() {
@@ -70,6 +79,6 @@ class MainViewModel(private val locationDao: LocationDao) : ViewModel() {
     }
 
     fun onTrackingStop() {
-        _trackingReady.value = false
+        _trackingStart.value = false
     }
 }

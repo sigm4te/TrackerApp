@@ -110,6 +110,10 @@ class MainFragment : Fragment() {
 
     private fun init() {
         mapController = binding.map.controller
+        binding.btnStart.isActivated = false
+        binding.btnStart.setOnClickListener {
+            viewModel.onTrackingStart()
+        }
         binding.btnStop.setOnClickListener {
             viewModel.onTrackingStop()
         }
@@ -150,17 +154,17 @@ class MainFragment : Fragment() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun start() {
-        viewModel.mapReady.observe(viewLifecycleOwner) { isReady ->
-            when(isReady) {
+        viewModel.mapReady.observe(viewLifecycleOwner) { isMapReady ->
+            when(isMapReady) {
                 false -> binding.map.visibility = INVISIBLE
                 true -> binding.map.visibility = VISIBLE
             }
         }
-        viewModel.permissionsGranted.observe(viewLifecycleOwner) { isGranted ->
-            when (isGranted) {
+        viewModel.permissionsGranted.observe(viewLifecycleOwner) { isPermissionsGranted ->
+            when (isPermissionsGranted) {
                 false -> {}
-                true -> { viewModel.locationEnabled.observe(viewLifecycleOwner) { isEnabled ->
-                    when (isEnabled) {
+                true -> { viewModel.locationEnabled.observe(viewLifecycleOwner) { isLocationEnabled ->
+                    when (isLocationEnabled) {
                         false -> {}
                         true -> {
                             viewModel.onTrackingReady()
@@ -173,18 +177,10 @@ class MainFragment : Fragment() {
     }
 
     private fun enableTracking() {
-        viewModel.trackingReady.observe(viewLifecycleOwner) {
-            val intent = Intent(requireContext(), LocationForegroundService::class.java)
-            when(it) {
-                false -> {
-                    requireContext().stopService(intent)
-                }
+        viewModel.trackingReady.observe(viewLifecycleOwner) { isReady ->
+            when(isReady) {
+                false -> {}
                 true -> {
-                    ContextCompat.startForegroundService(requireContext(), intent)
-
-                    viewModel.points.observe(viewLifecycleOwner) { points ->
-                        polylineOverlay.setPoints(points)
-                    }
                     viewModel.lastLocation.observe(viewLifecycleOwner) {
                         Handler(Looper.getMainLooper())
                             .apply { removeCallbacksAndMessages(null) }
@@ -193,7 +189,24 @@ class MainFragment : Fragment() {
                                 locationOverlay.enableFollowLocation()
                             }, delay)
                     }
-                    viewModel.onTrackingResult()
+                    binding.btnStart.isActivated = true
+
+                    val intent = Intent(requireContext(), LocationForegroundService::class.java)
+                    viewModel.trackingStart.observe(viewLifecycleOwner) { isStarted ->
+                        when(isStarted) {
+                            false -> {
+                                requireContext().stopService(intent)
+                            }
+                            true -> {
+                                ContextCompat.startForegroundService(requireContext(), intent)
+
+                                viewModel.points.observe(viewLifecycleOwner) { points ->
+                                    polylineOverlay.setPoints(points)
+                                }
+                                viewModel.onTrackingResult()
+                            }
+                        }
+                    }
                 }
             }
         }
