@@ -5,8 +5,9 @@
 
 В приложении использовано:
 * MVVM
+* XML
 * View Binding
 * LiveData
-* Coroutines
+* Kotlin Coroutines
 - OSMdroid
 - Room
